@@ -28,14 +28,23 @@ RUN curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
 RUN mkdir -p /data/db /var/log/mongodb \
     && chown -R mongodb:mongodb /data/db /var/log/mongodb
 
+
+# Permitir build args para entorno
+ARG NODE_ENV=production
+
 # Directorio de trabajo para la aplicación
 WORKDIR /usr/src/app
 
 # Copiar package.json y package-lock.json
 COPY package*.json ./
 
-# Instalar dependencias de Node.js
-RUN npm ci --only=production
+
+# Instalar dependencias de Node.js según entorno
+RUN if [ "$NODE_ENV" = "production" ]; then \
+    npm ci --only=production; \
+    else \
+    npm ci; \
+    fi
 
 # Copiar el resto del código de la aplicación
 COPY . .

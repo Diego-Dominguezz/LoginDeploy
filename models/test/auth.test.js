@@ -9,18 +9,19 @@ describe('Auth Routes', () => {
 
   beforeEach(async () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    await require('../models/user').deleteMany({ username: testUser.username }).exec();
+    const User = require('../../models/user');
+    await User.deleteMany({ username: testUser.username });
   });
 
   it('should register a user', async () => {
     const res = await request(app).post('/register').send(testUser);
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(302); // Redirect después de registro exitoso
   });
 
   it('should login a user', async () => {
     await request(app).post('/register').send(testUser); // Registrar primero
     const res = await request(app).post('/authenticate').send(testUser);
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(302); // Redirect después de login exitoso
   });
 
   it('should NOT login with wrong password', async () => {

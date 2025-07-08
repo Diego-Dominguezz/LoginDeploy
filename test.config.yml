@@ -1,0 +1,24 @@
+name: "Test Configuration"
+description: "Configuración para pruebas automatizadas"
+
+test:
+  environment: "test"
+  timeout: 30000
+  coverage:
+    threshold:
+      global:
+        branches: 70
+        functions: 70
+        lines: 70
+        statements: 70
+
+  database:
+    uri: "mongodb://localhost:27017/logindb_test"
+    options:
+      useNewUrlParser: true
+      useUnifiedTopology: true
+
+hooks:
+  beforeAll: "Clean database and setup test environment"
+  afterEach: "Clean collections after each test"
+  afterAll: "Close database connection"

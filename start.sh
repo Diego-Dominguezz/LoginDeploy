@@ -55,7 +55,7 @@ check_app() {
 
 # Iniciar la aplicación Node.js
 echo "Iniciando aplicación Node.js..."
-node app.js &
+node server.js &
 APP_PID=$!
 
 # Esperar a que la aplicación esté lista

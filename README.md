@@ -120,7 +120,94 @@ npm run dev
 
 # Ejecutar tests
 npm test
+
+# Ejecutar tests con cobertura
+npm run test:coverage
 ```
+
+## Testing
+
+Este proyecto incluye pruebas automatizadas con Jest y Supertest.
+
+### Configuración de Tests
+
+- **Jest**: Framework de testing
+- **Supertest**: Para pruebas de endpoints HTTP
+- **Cobertura**: Reportes de cobertura de código
+- **Base de datos de pruebas**: Usa `logindb_test` para no interferir con datos reales
+
+### Ejecutar Pruebas
+
+```bash
+# Ejecutar todas las pruebas
+npm test
+
+# Ejecutar pruebas en modo watch (recarga automática)
+npm run test:watch
+
+# Ejecutar pruebas con reporte de cobertura
+npm run test:coverage
+
+# Ejecutar pruebas con salida detallada
+npm run test:verbose
+
+# Ejecutar pruebas sin salida (para CI)
+npm run test:silent
+
+# Ejecutar pruebas en modo CI (para integración continua)
+npm run test:ci
+```
+
+### Ejecutar Pruebas en Docker
+
+```bash
+# Si el contenedor está ejecutándose
+docker-compose exec login-app npm test
+
+# Usar el script de pruebas
+./test-docker.sh
+```
+
+### Tipos de Pruebas
+
+1. **Tests de Autenticación** (`tests/auth.test.js`):
+
+   - Registro de usuarios
+   - Login con credenciales correctas/incorrectas
+   - Logout
+
+2. **Tests de Modelo** (`tests/user.test.js`):
+
+   - Creación de usuarios
+   - Validación de campos
+   - Restricciones de unicidad
+
+3. **Tests de Integración** (`tests/integration.test.js`):
+   - Flujo completo de registro y login
+   - Manejo de sesiones
+   - Servicio de archivos estáticos
+
+### Estructura de Tests
+
+```
+tests/
+├── auth.test.js       # Pruebas de autenticación
+├── user.test.js       # Pruebas del modelo de usuario
+└── integration.test.js # Pruebas de integración
+```
+
+### Configuración de Testing
+
+- `jest.config.js`: Configuración principal de Jest
+- `jest.setup.js`: Configuración inicial para tests
+- `.env.test`: Variables de entorno para pruebas
+
+### Reporte de Cobertura
+
+Después de ejecutar `npm run test:coverage`, puedes ver el reporte en:
+
+- Terminal: Reporte texto
+- Browser: Abrir `coverage/lcov-report/index.html`
 
 ## Notas Importantes
 

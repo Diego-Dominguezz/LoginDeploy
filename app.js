@@ -45,12 +45,16 @@ connectDB();
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
-    // Eccripta la contraseña
-    const hashedPassword = await bcrypt.hash(password, 10); // Hashea la contraseña
-
-    const user = new User({ username, password: hashedPassword });
+    // Validar campos requeridos
+    if (!username || !password) {
+        return res.status(500).send('Username y password son requeridos');
+    }
 
     try {
+        // Eccripta la contraseña
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = new User({ username, password: hashedPassword });
         await user.save(); // Guarda el usuario en la base de datos
         res.redirect('index.html'); // Redirige a login.html en caso de éxito
     } catch (err) {
@@ -81,10 +85,10 @@ app.post('/authenticate', async (req, res) => {
 const session = require('express-session');
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'secret-key',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false } // Cambiar a true si usas HTTPS
+    secret: process.env.SESSION_SECRET || 'secret-key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Cambiar a true si usas HTTPS
 }));
 
 app.get('/logout', (req, res) => {
@@ -101,9 +105,11 @@ app.get('/logout', (req, res) => {
     }
 });
 
-// Iniciar el servidor
-app.listen(3000, () => {
-    console.log('Server started on port 3000');
-});
+// Solo iniciar el servidor si no estamos en modo test
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(3000, () => {
+        console.log('Server started on port 3000');
+    });
+}
 
 module.exports = app;
