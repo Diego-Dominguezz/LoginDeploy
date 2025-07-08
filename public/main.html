@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peliculas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <h1>Alejandro Nevarez</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li class="logout"><a href="/logout">Cerrar sesión</a></li>
+                <li><a href="pong.html">Jugar Pong</a></li>
+                <li><a href="supermercado.html">Supermercado</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="section">
+        <h2>Panel principal</h2>
+        <b></b>
+        <p>Bienvenido, aquí encontrarás las mejores películas para disfrutar</p>
+
+        <!-- Peliculas originales -->
+        <div class="peliculas">
+            <h3>Peliculas Originales</h3>
+            <div class="peliculas-track" id="originales">
+                <div class="peliculas-item">
+                    <img src="img/armor.png" alt="armor" class="pelicula-img">
+                    <p>Armor</p>
+                    <button onclick="agregarPelicula(this)">Agregar</button>
+                </div>
+                <div class="peliculas-item">
+                    <img src="img/hables.png" alt="hables" class="pelicula-img">
+                    <p>No hables con extraños</p>
+                    <button onclick="agregarPelicula(this)">Agregar</button>
+                </div>
+                <div class="peliculas-item">
+                    <img src="img/kraven.png" alt="kraven" class="pelicula-img">
+                    <p>Kraven</p>
+                    <button onclick="agregarPelicula(this)">Agregar</button>
+                </div>
+                <div class="peliculas-item">
+                    <img src="img/santa.png" alt="santa" class="pelicula-img">
+                    <p>Querido Santa</p>
+                    <button onclick="agregarPelicula(this)">Agregar</button>
+                </div>
+                <div class="peliculas-item">
+                    <img src="img/smile.png" alt="smile" class="pelicula-img">
+                    <p>Smile 2</p>
+                    <button onclick="agregarPelicula(this)">Agregar</button>
+                </div>
+                <div class="peliculas-item">
+                    <img src="img/venom.png" alt="venom" class="pelicula-img">
+                    <p>Venom</p>
+                    <button onclick="agregarPelicula(this)">Agregar</button>
+                </div>
+            </div>
+            <div class="peliculas-buttons">
+                <button class="prev" id="prevOriginal">&#10094;</button>
+                <button class="next" id="nextOriginal">&#10095;</button>
+            </div>
+        </div>
+
+        <!-- Peliculas Añadidas -->
+        <div class="peliculas">
+            <h3>Peliculas Añadidas</h3>
+            <div class="peliculas-track" id="añadidas"></div>
+            <div class="peliculas-buttons">
+                <button class="prev" id="prevAñadidas">&#10094;</button>
+                <button class="next" id="nextAñadidas">&#10095;</button>
+            </div>
+        </div>
+    </div>
+    <div id="vistas">
+        <h2>Mas vistas</h2>
+        <button onclick="mostrarPeliculas()">Mostrar Películas</button>
+<div id="contenedor-peliculas" style="display: flex; flex-direction: column; align-items: center; gap: 10px;"></div>
+
+    </div>
+    <footer>
+        <p>&copy; 2024 Alejandro Nevarez. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- <script>
+        const originalesTrack = document.getElementById('originales');
+        const añadidasTrack = document.getElementById('añadidas');
+        const prevOriginal = document.getElementById('prevOriginal');
+        const nextOriginal = document.getElementById('nextOriginal');
+        const prevAñadidas = document.getElementById('prevAñadidas');
+        const nextAñadidas = document.getElementById('nextAñadidas');
+
+        let peliculasAñadidas = [];
+
+        function updatePeliculas(track, index) {
+            const items = track.querySelectorAll('.peliculas-item');
+            const width = items[0] ? items[0].getBoundingClientRect().width : 0;
+            track.style.transform = `translateX(-${index * width}px)`;
+        }
+
+        let currentIndexOriginales = 0;
+        let currentIndexAñadidas = 0;
+
+        nextOriginal.addEventListener('click', () => {
+            if (originalesTrack.children.length > 0) {
+                currentIndexOriginales = (currentIndexOriginales + 1) % originalesTrack.children.length;
+                updatePeliculas(originalesTrack, currentIndexOriginales);
+            }
+        });
+
+        prevOriginal.addEventListener('click', () => {
+            if (originalesTrack.children.length > 0) {
+                currentIndexOriginales = (currentIndexOriginales - 1 + originalesTrack.children.length) % originalesTrack.children.length;
+                updatePeliculas(originalesTrack, currentIndexOriginales);
+            }
+        });
+
+        nextAñadidas.addEventListener('click', () => {
+            if (añadidasTrack.children.length > 0) {
+                currentIndexAñadidas = (currentIndexAñadidas + 1) % añadidasTrack.children.length;
+                updatePeliculas(añadidasTrack, currentIndexAñadidas);
+            }
+        });
+
+        prevAñadidas.addEventListener('click', () => {
+            if (añadidasTrack.children.length > 0) {
+                currentIndexAñadidas = (currentIndexAñadidas - 1 + añadidasTrack.children.length) % añadidasTrack.children.length;
+                updatePeliculas(añadidasTrack, currentIndexAñadidas);
+            }
+        });
+
+        function agregarPelicula(button) {
+            const pelicula = button.previousElementSibling.textContent;
+            const imgSrc = button.previousElementSibling.previousElementSibling.src;
+
+            if (!peliculasAñadidas.includes(pelicula)) {
+                peliculasAñadidas.push(pelicula);
+                const div = document.createElement('div');
+                div.classList.add('peliculas-item');
+                div.innerHTML = `
+                    <img src="${imgSrc}" alt="${pelicula}">
+                    <p>${pelicula}</p>
+                    <button onclick="eliminarPelicula('${pelicula}')">Eliminar</button>
+                `;
+                añadidasTrack.appendChild(div);
+            }
+        }
+
+        function eliminarPelicula(pelicula) {
+            peliculasAñadidas = peliculasAñadidas.filter(item => item !== pelicula);
+            const divs = añadidasTrack.querySelectorAll('.peliculas-item');
+            divs.forEach(div => {
+                if (div.querySelector('p').textContent === pelicula) {
+                    añadidasTrack.removeChild(div);
+                }
+            });
+        }
+    </script> -->
+    <script src="js/funciones.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            inicializarPeliculas();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+*{box-sizing: border-box;}
+
+body{font-family: Arial, Helvetica, sans-serif;}
+form{width: 400px; margin: 0 auto; border: solid 1px #ccc; padding: 20px; }
+
+input[type=text], input[type=password]{
+    border: solid 1px #ccc;
+    border-radius: 3px;
+    font-size: 18px;
+    outline: none;
+    padding: 10px;
+    width: 100%;
+
+}
+
+input[type=sumbit]{
+    border: 0;
+    outline: 0;
+    background-color: blueviolet;
+    font-size: 18px;
+    color: white;
+    padding: 10px 30px;
+    border-radius: 3px;
+}
+
+.section{padding: 15px 0;}
+.section .title{padding: 10px 0;}
+
+.button{
+    padding: 10px 0;
+    text-align: center;
+}
+
+        /* CSS específico para la página de inicio */
+        h1 {
+            text-align: center;
+            color: blueviolet;
+        }
+        p {
+            text-align: center;
+            font-size: 18px;
+        }
+        .button {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .button a {
+            text-decoration: none;
+            color: white;
+            background-color: blueviolet;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .button a:hover {
+            background-color: darkviolet;
+        }
+  
+
+        /* Validaciones para el formulario */
+        

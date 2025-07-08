@@ -1,0 +1,43 @@
+name: CI & Docker Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout code
+        uses: actions/checkout@v4
+      -
+        name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      -
+        name: Install dependencies
+        run: npm ci
+      -
+        name: Run tests with Jest
+        run: npm test
+      -
+        name: Build Docker image with Bake
+        run: |
+          docker buildx install
+          docker buildx bake -f bake.hcl
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
+      -
+        name: Push Docker image
+        run: |
+          docker push login-app:latest
+        if: ${{ secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}

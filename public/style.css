@@ -1,0 +1,248 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: space-around;
+    align-items: center; /* Centra verticalmente */
+    height: 100vh; /* Altura completa de la ventana */
+    margin-top: 100px;
+    background-color: #e3cbc0; /* Mantener el color del primer CSS */
+}
+
+#productos, #departamentos {
+    width: 45%;
+}
+
+#productos p {
+    cursor: pointer;
+    padding: 8px;
+    border: 1px solid #ddd;
+    margin: 4px 0;
+}
+
+#departamentos {
+    border: 2px solid #333;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+#departamentos #orden p {
+    align-items: center;
+}
+
+button {
+    margin-top: 20px;
+    border-radius: 10px;
+    background-color: #653535;
+    color: #efadad;
+    border: none;
+    cursor: pointer;
+    padding: 10px 20px;
+}
+
+img {
+    width: 75%;
+    height: auto;
+    margin-top: 10px;
+}
+
+h1 {
+    color: rgb(103, 23, 7);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    font-size: 16px;
+    text-align: center;
+}
+
+h2 {
+    color: rgb(225, 98, 72);
+}
+
+p {
+    color: rgb(103, 23, 7);
+    text-align: center;
+    font-size: 18px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #995353;
+    color: #efadad;
+    padding: 10px;
+    text-align: center;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    width: 100%;
+    height: 50px;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    text-transform: uppercase;
+}
+
+header ul {
+    display: inline;
+    list-style-type: none;
+    margin: 0.5em auto;
+    text-align: center;
+}
+
+header ul li {
+    display: inline;
+}
+
+header ul li a {
+    text-decoration: none;
+    border: solid;
+    border-color: #7D8471;
+    border-radius: 50px;
+    background-color: #653535;
+    color: #efadad;
+    padding: 0.3em;
+}
+
+header ul li a:hover {
+    background-color: #B8B799;
+    border-color: #B8B799;
+}
+
+header ul li a:active {
+    padding: 0.2em;
+}
+
+canvas {
+    background: #ab7070; /* Fondo del canvas */
+    display: block;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Opcional: Borde luminoso */
+}
+
+form {
+    width: 400px;
+    margin: 0 auto;
+    border: solid 1px #ccc;
+    padding: 20px;
+}
+
+input[type=text], input[type=password] {
+    border: solid 1px #ccc;
+    border-radius: 3px;
+    font-size: 18px;
+    outline: none;
+    padding: 10px;
+    width: 100%;
+}
+
+input[type=sumbit] {
+    border: 0;
+    outline: 0;
+    background-color: #653535; /* Color ajustado */
+    font-size: 18px;
+    color: #efadad; /* Color ajustado */
+    padding: 10px 30px;
+    border-radius: 3px;
+}
+
+.section {
+    padding: 15px 0;
+}
+
+.section .title {
+    padding: 10px 0;
+}
+
+.button {
+    padding: 10px 0;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.button a {
+    text-decoration: none;
+    color: white;
+    background-color: #653535; /* Color ajustado */
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.button a:hover {
+    background-color: #B8B799; /* Color ajustado */
+}
+
+footer {
+    background-color: #653535; /* Color ajustado */
+    color: #efadad; /* Color ajustado */
+    padding: 10px;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+:is(input, textarea):invalid {
+    background: #D26A6A;
+  }
+  
+  :is(input, textarea):valid {
+    background: #7AA86F;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+  
+  :is(input, textarea):focus {
+    background: #B8B799;
+  }
+
+  /* Secciones de peliculas */
+
+  .peliculas {
+    width: 80%;
+    margin: 50px auto;
+    position: relative;
+    overflow: hidden;
+}
+.peliculas-track {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+}
+.peliculas-item {
+    min-width: 33.33%;
+    box-sizing: border-box;
+    padding: 10px;
+    text-align: center;
+}
+.peliculas-item img {
+    width: 100%;
+    border-radius: 10px;
+}
+.peliculas-buttons {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+.peliculas-buttons button {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+.peliculas-buttons button:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
