@@ -12,12 +12,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Login to Docker Hub (puedes cambiar por ECR si lo necesitas)
-      - name: Login to DockerHub
+      # Configura credenciales de AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Obtiene el password de ECR
+      - name: Get ECR password
+        id: ecr_password
+        run: echo "password=$(aws ecr get-login-password --region ${{ secrets.AWS_REGION }})" >> $GITHUB_OUTPUT
+
+      # Login a AWS ECR usando docker/login-action
+      - name: Login to Amazon ECR
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ${{ secrets.ECR_REGISTRY }}
+          username: AWS
+          password: ${{ steps.ecr_password.outputs.password }}
 
       # Instala dependencias y corre pruebas Jest
       - name: Set up Node.js
@@ -33,12 +47,14 @@ jobs:
 
       # Build and push images (Docker Bake si existe, Compose si no)
       - name: Build and push Docker images (Bake or Compose)
+        env:
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
         run: |
           if [ -f docker-bake.hcl ]; then
-            docker buildx bake --push
+            ECR_REGISTRY=${{ secrets.ECR_REGISTRY }} docker buildx bake --push
           else
-            docker compose build
-            docker compose push
+            docker build -t ${{ secrets.ECR_REGISTRY }}/login-ejemplo:latest .
+            docker push ${{ secrets.ECR_REGISTRY }}/login-ejemplo:latest
           fi
 
       # Despliegue remoto en EC2 vía SSH (solo pull y up, sin git pull)
@@ -50,6 +66,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/LoginDeploy
-            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            echo "ECR_REGISTRY=${{ secrets.ECR_REGISTRY }}" > .env
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
             docker compose pull
             docker compose up -d --remove-orphans

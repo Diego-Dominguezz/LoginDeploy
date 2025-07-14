@@ -1,3 +1,7 @@
+variable "ECR_REGISTRY" {
+    default = "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+}
+
 group "default" {
     targets = ["production"]
 }
@@ -7,23 +11,23 @@ group "all" {
 }
 
 target "test" {
-  context = "."
-  dockerfile = "Dockerfile"
-  tags = [
-    "diegodguez/proyectologin:test"
+    context = "."
+    dockerfile = "Dockerfile"
+    tags = [
+    "${ECR_REGISTRY}/login-ejemplo:test"
   ]
-  args = {
-    NODE_ENV = "test"
-  }
+    args = {
+        NODE_ENV = "test"
+    }
 }
 
 target "production" {
-  context = "."
-  dockerfile = "Dockerfile"
-  tags = [
-    "diegodguez/proyectologin:latest"
+    context = "."
+    dockerfile = "Dockerfile"
+    tags = [
+    "${ECR_REGISTRY}/login-ejemplo:latest"
   ]
-  args = {
-    NODE_ENV = "production"
-  }
+    args = {
+        NODE_ENV = "production"
+    }
 }
