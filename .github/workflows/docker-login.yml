@@ -105,15 +105,24 @@ jobs:
               sudo apt update
               sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
               sudo usermod -aG docker ubuntu
-              newgrp docker
+              # Reiniciar servicio Docker para asegurar que funcione
+              sudo systemctl enable docker
+              sudo systemctl restart docker
+              sleep 5
             fi
 
-            # Copiar archivos necesarios si no existen
-            if [ ! -f docker-compose.yml ]; then
-              echo 'version: "3.8"
+            # Verificar si el usuario está en el grupo docker, si no agregarlo
+            if ! groups | grep -q docker; then
+              sudo usermod -aG docker ubuntu
+              echo "Usuario agregado al grupo docker."
+            fi
+
+            # Crear docker-compose.yml para producción
+            cat > docker-compose.yml << 'EOFCOMPOSE'
+            version: "3.8"
             services:
               login-app:
-                image: ${ECR_REGISTRY}/login-ejemplo:latest
+                image: ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:latest
                 ports:
                   - "80:3000"
                 volumes:
@@ -130,13 +139,23 @@ jobs:
                   start_period: 40s
             volumes:
               mongodb_data:
-                driver: local' > docker-compose.yml
-            fi
+                driver: local
+            EOFCOMPOSE
 
-            # Configurar variables de entorno
-            echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" > .env
+            # Configurar credenciales AWS para este usuario
+            export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+            export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+            export AWS_DEFAULT_REGION="${{ secrets.AWS_REGION }}"
 
-            # Login a ECR y deploy
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
-            docker compose pull
-            docker compose up -d --remove-orphans
+            # Login a ECR y deploy con sudo
+            echo "🔐 Logging in to ECR..."
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+            
+            echo "📥 Pulling latest image..."
+            sudo docker compose pull
+            
+            echo "🚀 Starting deployment..."
+            sudo docker compose up -d --remove-orphans
+            
+            echo "✅ Deployment completed!"
+            sudo docker compose ps

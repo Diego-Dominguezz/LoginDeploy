@@ -91,15 +91,24 @@ jobs:
               sudo apt update
               sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
               sudo usermod -aG docker ubuntu
-              newgrp docker
+              # Reiniciar servicio Docker para asegurar que funcione
+              sudo systemctl enable docker
+              sudo systemctl restart docker
+              sleep 5
             fi
 
-            # Copiar archivo docker-compose para testing si no existe
-            if [ ! -f docker-compose.testing.yml ]; then
-              echo 'version: "3.8"
+            # Verificar si el usuario está en el grupo docker, si no agregarlo
+            if ! groups | grep -q docker; then
+              sudo usermod -aG docker ubuntu
+              echo "Usuario agregado al grupo docker."
+            fi
+
+            # Crear docker-compose.testing.yml para testing
+            cat > docker-compose.testing.yml << 'EOFCOMPOSE'
+            version: "3.8"
             services:
               login-app-testing:
-                image: ${ECR_REGISTRY}/login-ejemplo:${IMAGE_TAG:-testing}
+                image: ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing
                 ports:
                   - "8080:3000"
                 volumes:
@@ -116,14 +125,23 @@ jobs:
                   start_period: 40s
             volumes:
               mongodb_data_testing:
-                driver: local' > docker-compose.testing.yml
-            fi
+                driver: local
+            EOFCOMPOSE
 
-            # Configurar variables de entorno
-            echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" > .env
-            echo "IMAGE_TAG=testing" >> .env
+            # Configurar credenciales AWS para este usuario
+            export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+            export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+            export AWS_DEFAULT_REGION="${{ secrets.AWS_REGION }}"
 
-            # Login a ECR y deploy
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
-            docker compose -f docker-compose.testing.yml pull
-            docker compose -f docker-compose.testing.yml up -d --remove-orphans
+            # Login a ECR y deploy con sudo
+            echo "🔐 Logging in to ECR..."
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+            
+            echo "📥 Pulling latest testing image..."
+            sudo docker compose -f docker-compose.testing.yml pull
+            
+            echo "🚀 Starting testing deployment..."
+            sudo docker compose -f docker-compose.testing.yml up -d --remove-orphans
+            
+            echo "✅ Testing deployment completed!"
+            sudo docker compose -f docker-compose.testing.yml ps
