@@ -11,7 +11,8 @@
     "test:verbose": "set NODE_ENV=test && jest --verbose",
     "test:silent": "set NODE_ENV=test && jest --silent",
     "test:ci": "NODE_ENV=test jest --ci --coverage --watchAll=false --testPathIgnorePatterns=/tests/integration.test.js",
-    "test:unit": "NODE_ENV=test jest --testPathIgnorePatterns=/tests/integration.test.js --testPathIgnorePatterns=/models/test/",
+    "test:unit": "set NODE_ENV=test && jest --config=jest.unit.config.js",
+    "test:unit:ci": "NODE_ENV=test jest --config=jest.unit.config.js",
     "dockerize": "docker-compose up -d --build"
   },
   "author": "",
