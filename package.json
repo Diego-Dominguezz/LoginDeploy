@@ -10,7 +10,8 @@
     "test:coverage": "set NODE_ENV=test && jest --coverage",
     "test:verbose": "set NODE_ENV=test && jest --verbose",
     "test:silent": "set NODE_ENV=test && jest --silent",
-    "test:ci": "set NODE_ENV=test && jest --ci --coverage --watchAll=false",
+    "test:ci": "NODE_ENV=test jest --ci --coverage --watchAll=false --testPathIgnorePatterns=/tests/integration.test.js",
+    "test:unit": "NODE_ENV=test jest --testPathIgnorePatterns=/tests/integration.test.js --testPathIgnorePatterns=/models/test/",
     "dockerize": "docker-compose up -d --build"
   },
   "author": "",

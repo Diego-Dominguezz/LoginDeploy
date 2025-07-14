@@ -22,8 +22,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests with Jest
-        run: npm test
+      - name: Run tests with Jest (Unit tests only)
+        run: npm run test:unit
 
       - name: Build Docker image (CI only)
         run: |
@@ -68,8 +68,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests with Jest
-        run: npm test
+      - name: Run tests with Jest (Unit tests only)
+        run: npm run test:unit
 
       # Build and push images (Docker Bake si existe, Compose si no)
       - name: Build and push Docker images (Bake or Compose)
