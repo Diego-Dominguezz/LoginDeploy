@@ -46,18 +46,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Obtiene el password de ECR
-      - name: Get ECR password
-        id: ecr_password
-        run: echo "password=$(aws ecr get-login-password --region ${{ secrets.AWS_REGION }})" >> $GITHUB_OUTPUT
-
-      # Login a AWS ECR usando docker/login-action
+      # Login a AWS ECR usando aws-actions/amazon-ecr-login
       - name: Login to Amazon ECR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.ECR_REGISTRY }}
-          username: AWS
-          password: ${{ steps.ecr_password.outputs.password }}
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       # Instala dependencias y corre pruebas Jest
       - name: Set up Node.js
@@ -74,13 +66,13 @@ jobs:
       # Build and push images (Docker Bake si existe, Compose si no)
       - name: Build and push Docker images (Bake or Compose)
         env:
-          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           if [ -f docker-bake.hcl ]; then
-            ECR_REGISTRY=${{ secrets.ECR_REGISTRY }} docker buildx bake --push
+            ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }} docker buildx bake --push
           else
-            docker build -t ${{ secrets.ECR_REGISTRY }}/login-ejemplo:latest .
-            docker push ${{ secrets.ECR_REGISTRY }}/login-ejemplo:latest
+            docker build -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:latest .
+            docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:latest
           fi
 
       # Despliegue remoto en EC2 vía SSH (solo pull y up, sin git pull)
@@ -92,7 +84,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/LoginDeploy
-            echo "ECR_REGISTRY=${{ secrets.ECR_REGISTRY }}" > .env
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+            echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" > .env
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
             docker compose pull
             docker compose up -d --remove-orphans

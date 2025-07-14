@@ -1,5 +1,5 @@
 variable "ECR_REGISTRY" {
-    default = "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+    default = "488343657053.dkr.ecr.us-east-2.amazonaws.com"
 }
 
 group "default" {
