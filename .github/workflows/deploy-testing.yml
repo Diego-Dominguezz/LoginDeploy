@@ -1,13 +1,12 @@
-name: CI, Build & Deploy to AWS EC2
+name: Deploy to Testing Environment
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches: [develop, testing]
+  workflow_dispatch:  # Permite ejecutar manualmente
 
 jobs:
-  # Job de CI - Se ejecuta en push y PRs
+  # Job de CI - Se ejecuta siempre
   ci:
     runs-on: ubuntu-latest
     steps:
@@ -27,13 +26,12 @@ jobs:
 
       - name: Build Docker image (CI only)
         run: |
-          docker build -t login-ejemplo:ci .
+          docker build -t login-ejemplo:testing-ci .
 
-  # Job de Build & Deploy - Solo se ejecuta en push a main
-  build-and-deploy:
+  # Job de Build & Deploy Testing - Solo se ejecuta en push a develop/testing
+  build-and-deploy-testing:
     runs-on: ubuntu-latest
     needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -51,40 +49,29 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Instala dependencias y corre pruebas Jest
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests with Jest (Unit tests only)
-        run: npm run test:unit:ci
-
-      # Build and push images (Docker Bake si existe, Compose si no)
-      - name: Build and push Docker images (Bake or Compose)
+      # Build and push imagen testing con Docker Bake
+      - name: Build and push Testing image with Docker Bake
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           if [ -f docker-bake.hcl ]; then
-            ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }} docker buildx bake --push production
+            ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }} docker buildx bake --push testing-deploy
           else
-            docker build -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:latest --build-arg NODE_ENV=production .
-            docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:latest
+            docker build -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing --build-arg NODE_ENV=testing .
+            docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing
           fi
 
-      # Despliegue remoto en EC2 vía SSH (solo pull y up, sin git pull)
-      - name: Deploy on EC2 via SSH
+      # Despliegue remoto en EC2 Testing vía SSH (solo pull y up, sin git pull)
+      - name: Deploy on EC2 Testing via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_TESTING_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/LoginDeploy
+            cd ~/LoginDeploy-Testing
             echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" > .env
+            echo "IMAGE_TAG=testing" >> .env
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
-            docker compose pull
-            docker compose up -d --remove-orphans
+            docker compose -f docker-compose.testing.yml pull
+            docker compose -f docker-compose.testing.yml up -d --remove-orphans

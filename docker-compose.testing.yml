@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  login-app-testing:
+    image: ${ECR_REGISTRY}/login-ejemplo:${IMAGE_TAG:-testing}
+    ports:
+      - "8080:3000" # Puerto diferente para testing
+      # - "27017:27017" # Uncomment only if you need to access MongoDB from your host (not needed for normal app use)
+    volumes:
+      - mongodb_data_testing:/data/db
+      - ./logs:/var/log/mongodb
+    environment:
+      - NODE_ENV=testing
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  mongodb_data_testing:
+    driver: local

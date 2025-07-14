@@ -7,7 +7,11 @@ group "default" {
 }
 
 group "all" {
-    targets = ["test", "production"]
+    targets = ["test", "testing", "production"]
+}
+
+group "testing-deploy" {
+    targets = ["testing"]
 }
 
 target "test" {
@@ -18,6 +22,17 @@ target "test" {
   ]
     args = {
         NODE_ENV = "test"
+    }
+}
+
+target "testing" {
+    context = "."
+    dockerfile = "Dockerfile"
+    tags = [
+    "${ECR_REGISTRY}/login-ejemplo:testing"
+  ]
+    args = {
+        NODE_ENV = "testing"
     }
 }
 
