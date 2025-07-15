@@ -5,11 +5,46 @@ set -e
 cleanup() {
     echo "Cerrando servicios..."
     pkill mongod || true
+    pkill node || true
     exit 0
 }
 
 # Manejar señales de terminación
 trap cleanup SIGTERM SIGINT
+
+# Limpiar procesos anteriores que puedan estar corriendo
+echo "Limpiando procesos anteriores..."
+pkill -9 -f mongod || true
+pkill -9 -f node || true
+pkill -9 -f server.js || true
+pkill -9 -f "node.*server" || true
+killall -9 mongod || true
+killall -9 node || true
+sleep 5
+
+# Verificar que el puerto 3000 esté libre más exhaustivamente
+echo "Verificando puerto 3000..."
+for i in {1..3}; do
+    if netstat -tlnp | grep :3000 > /dev/null 2>&1; then
+        echo "Intento $i: Puerto 3000 ocupado, forzando liberación..."
+        fuser -k 3000/tcp || true
+        # Intentar con lsof si está disponible
+        lsof -ti:3000 | xargs -r kill -9 || true
+        sleep 3
+    else
+        echo "Puerto 3000 libre en intento $i ✓"
+        break
+    fi
+    
+    if [ $i -eq 3 ] && netstat -tlnp | grep :3000 > /dev/null 2>&1; then
+        echo "Error: No se pudo liberar el puerto 3000 después de múltiples intentos"
+        echo "Procesos usando el puerto:"
+        netstat -tlnp | grep :3000
+        echo "Todos los procesos:"
+        ps -A
+        exit 1
+    fi
+done
 
 # Crear directorio de logs si no existe
 mkdir -p /var/log
@@ -48,34 +83,37 @@ try {
 }
 " || echo "Error en la configuración de la base de datos (continuando...)"
 
-# Función para verificar si la aplicación está funcionando
-check_app() {
-    curl -f http://localhost:3000 > /dev/null 2>&1
-}
+# Verificar nuevamente que el puerto esté libre antes de iniciar Node.js
+echo "Verificación final del puerto 3000..."
+for i in {1..5}; do
+    if netstat -tlnp | grep :3000 > /dev/null 2>&1; then
+        echo "Verificación final intento $i: Puerto 3000 todavía ocupado"
+        echo "Procesos usando el puerto:"
+        netstat -tlnp | grep :3000
+        echo "Intentando limpiar..."
+        fuser -k 3000/tcp || true
+        lsof -ti:3000 | xargs -r kill -9 || true
+        sleep 2
+    else
+        echo "Puerto 3000 libre en verificación final ✓"
+        break
+    fi
+    
+    if [ $i -eq 5 ]; then
+        echo "Error: Puerto 3000 todavía ocupado después de múltiples verificaciones"
+        echo "Procesos usando el puerto:"
+        netstat -tlnp | grep :3000
+        echo "Todos los procesos:"
+        ps -A
+        exit 1
+    fi
+done
 
-# Iniciar la aplicación Node.js
+# Iniciar la aplicación Node.js en primer plano (no en background)
 echo "Iniciando aplicación Node.js..."
-node server.js &
-APP_PID=$!
+echo "Directorio actual: $(pwd)"
+echo "Archivos disponibles:"
+ls -la
 
-# Esperar a que la aplicación esté lista
-echo "Esperando a que la aplicación esté lista..."
-sleep 5
-
-# Verificar que tanto MongoDB como la aplicación estén funcionando
-if ! pgrep mongod > /dev/null; then
-    echo "Error: MongoDB no está funcionando"
-    exit 1
-fi
-
-if ! kill -0 $APP_PID 2>/dev/null; then
-    echo "Error: La aplicación Node.js no está funcionando"
-    exit 1
-fi
-
-echo "Aplicación iniciada exitosamente"
-echo "- Aplicación web: http://localhost:3000"
-echo "- MongoDB: localhost:27017"
-
-# Mantener el contenedor funcionando
-wait $APP_PID
+# Ejecutar Node.js en primer plano para evitar procesos duplicados
+exec node server.js

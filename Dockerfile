@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     lsb-release \
     ca-certificates \
+    net-tools \
+    psmisc \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar Node.js 20

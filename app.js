@@ -107,9 +107,6 @@ app.get('/logout', (req, res) => {
 
 // Solo iniciar el servidor si no estamos en modo test
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(3000, () => {
-        console.log('Server started on port 3000');
-    });
 }
 
 module.exports = app;

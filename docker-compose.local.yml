@@ -1,0 +1,21 @@
+services:
+  login-app:
+    image: login-ejemplo-test:latest
+    ports:
+      - "8081:3000" # Map app port 3000 in the container to port 8081 on the host
+    volumes:
+      - mongodb_data:/data/db
+      - ./logs:/var/log/mongodb
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    init: true # Helps with process management inside container
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 60s # Increased interval to reduce load
+      timeout: 15s # Increased timeout
+      retries: 5 # More retries
+      start_period: 90s # More time for startup
+
+volumes:
+  mongodb_data:
