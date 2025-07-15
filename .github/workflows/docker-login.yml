@@ -119,7 +119,6 @@ jobs:
 
             # Crear docker-compose.yml para producción
             cat > docker-compose.yml << 'EOFCOMPOSE'
-            version: "3.8"
             services:
               login-app:
                 image: ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:latest
@@ -131,12 +130,13 @@ jobs:
                 environment:
                   - NODE_ENV=production
                 restart: unless-stopped
+                init: true
                 healthcheck:
                   test: ["CMD", "curl", "-f", "http://localhost:3000"]
-                  interval: 30s
-                  timeout: 10s
-                  retries: 3
-                  start_period: 40s
+                  interval: 60s
+                  timeout: 15s
+                  retries: 5
+                  start_period: 90s
             volumes:
               mongodb_data:
                 driver: local

@@ -105,7 +105,6 @@ jobs:
 
             # Crear docker-compose.testing.yml para testing
             cat > docker-compose.testing.yml << 'EOFCOMPOSE'
-            version: "3.8"
             services:
               login-app-testing:
                 image: ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing
@@ -117,12 +116,13 @@ jobs:
                 environment:
                   - NODE_ENV=testing
                 restart: unless-stopped
+                init: true
                 healthcheck:
                   test: ["CMD", "curl", "-f", "http://localhost:3000"]
-                  interval: 30s
-                  timeout: 10s
-                  retries: 3
-                  start_period: 40s
+                  interval: 60s
+                  timeout: 15s
+                  retries: 5
+                  start_period: 90s
             volumes:
               mongodb_data_testing:
                 driver: local
