@@ -145,7 +145,7 @@ jobs:
 
             # Set up auto-start service (only needs to be done once, but safe to run multiple times)
             echo "🔧 Setting up auto-start service..."
-            
+
             # Create systemd service file
             sudo tee /etc/systemd/system/login-app-testing.service > /dev/null << 'EOFSERVICE'
             [Unit]

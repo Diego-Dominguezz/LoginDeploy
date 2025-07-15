@@ -16,8 +16,8 @@ trap cleanup SIGTERM SIGINT
 echo "Limpiando procesos anteriores..."
 pkill -9 -f mongod || true
 pkill -9 -f node || true
-pkill -9 -f server.js || true
-pkill -9 -f "node.*server" || true
+pkill -9 -f app.js || true
+pkill -9 -f "node.*app" || true
 killall -9 mongod || true
 killall -9 node || true
 sleep 5
@@ -116,4 +116,4 @@ echo "Archivos disponibles:"
 ls -la
 
 # Ejecutar Node.js en primer plano para evitar procesos duplicados
-exec node server.js
+exec node app.js
