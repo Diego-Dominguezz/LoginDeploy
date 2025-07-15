@@ -143,5 +143,34 @@ jobs:
             echo "🚀 Starting testing deployment..."
             sudo docker compose -f docker-compose.testing.yml up -d --remove-orphans
 
+            # Set up auto-start service (only needs to be done once, but safe to run multiple times)
+            echo "🔧 Setting up auto-start service..."
+            
+            # Create systemd service file
+            sudo tee /etc/systemd/system/login-app-testing.service > /dev/null << 'EOFSERVICE'
+            [Unit]
+            Description=Login App Testing Docker Compose
+            Requires=docker.service
+            After=docker.service
+
+            [Service]
+            Type=oneshot
+            RemainAfterExit=yes
+            WorkingDirectory=/home/ubuntu
+            ExecStart=/usr/local/bin/docker-compose -f docker-compose.testing.yml up -d
+            ExecStop=/usr/local/bin/docker-compose -f docker-compose.testing.yml down
+            TimeoutStartSec=0
+            User=ubuntu
+            Group=docker
+
+            [Install]
+            WantedBy=multi-user.target
+            EOFSERVICE
+
+            # Enable the service (will start automatically on boot)
+            sudo systemctl daemon-reload
+            sudo systemctl enable login-app-testing.service
+
             echo "✅ Testing deployment completed!"
+            echo "✅ Auto-start service enabled - app will restart automatically when EC2 reboots!"
             sudo docker compose -f docker-compose.testing.yml ps

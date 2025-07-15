@@ -157,5 +157,34 @@ jobs:
             echo "🚀 Starting deployment..."
             sudo docker compose up -d --remove-orphans
 
+            # Set up auto-start service (only needs to be done once, but safe to run multiple times)
+            echo "🔧 Setting up auto-start service..."
+            
+            # Create systemd service file
+            sudo tee /etc/systemd/system/login-app.service > /dev/null << 'EOFSERVICE'
+            [Unit]
+            Description=Login App Production Docker Compose
+            Requires=docker.service
+            After=docker.service
+
+            [Service]
+            Type=oneshot
+            RemainAfterExit=yes
+            WorkingDirectory=/home/ubuntu
+            ExecStart=/usr/local/bin/docker-compose up -d
+            ExecStop=/usr/local/bin/docker-compose down
+            TimeoutStartSec=0
+            User=ubuntu
+            Group=docker
+
+            [Install]
+            WantedBy=multi-user.target
+            EOFSERVICE
+
+            # Enable the service (will start automatically on boot)
+            sudo systemctl daemon-reload
+            sudo systemctl enable login-app.service
+
             echo "✅ Deployment completed!"
+            echo "✅ Auto-start service enabled - app will restart automatically when EC2 reboots!"
             sudo docker compose ps
