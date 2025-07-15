@@ -1,17 +1,21 @@
 # 🐳 Guía para Evitar Problemas de Imágenes Docker No Actualizadas
 
 ## 🚨 Problema Resuelto
+
 El problema de `EADDRINUSE` se debía a que el servidor AWS estaba usando imágenes Docker viejas que aún contenían `server.js`. Al eliminar las imágenes viejas del servidor, el problema se solucionó.
 
 ## 🛡️ Estrategias para Prevenir este Problema en el Futuro
 
 ### 1. **Tags Únicos por Deploy** ✅ IMPLEMENTADO
+
 - **Antes**: `login-ejemplo:testing` (siempre el mismo tag)
 - **Ahora**: `login-ejemplo:testing-{commit-sha}-{run-number}`
 - **Beneficio**: Cada deploy tiene un tag único, forzando descarga de imagen nueva
 
 ### 2. **Limpieza Automática en el Workflow** ✅ IMPLEMENTADO
+
 El workflow ahora incluye:
+
 ```bash
 # Detener contenedores existentes
 sudo docker compose down --remove-orphans
@@ -27,7 +31,9 @@ sudo docker compose up -d --force-recreate
 ### 3. **Scripts de Limpieza Manual**
 
 #### 📄 `scripts/clean-docker-images.sh`
+
 Úsalo cuando necesites limpiar manualmente:
+
 ```bash
 # En tu servidor EC2:
 ssh -i "loginCreds.pem" ubuntu@18.191.74.193
@@ -36,7 +42,9 @@ cd ~/LoginDeploy-Testing
 ```
 
 #### 📄 `scripts/force-deploy.sh`
+
 Para deployments manuales con limpieza automática:
+
 ```bash
 # En tu servidor EC2:
 ./force-deploy.sh testing-latest
@@ -45,6 +53,7 @@ Para deployments manuales con limpieza automática:
 ### 4. **Comandos Docker Útiles**
 
 #### 🔍 **Verificar Imágenes Actuales**
+
 ```bash
 # Ver todas las imágenes de tu aplicación
 docker images | grep login-ejemplo
@@ -57,6 +66,7 @@ docker compose -f docker-compose.testing.yml logs -f
 ```
 
 #### 🧹 **Limpieza Manual Rápida**
+
 ```bash
 # Detener todos los contenedores
 docker compose down --remove-orphans
@@ -70,6 +80,7 @@ docker compose up -d --force-recreate
 ```
 
 #### 🗑️ **Eliminar Imágenes Específicas**
+
 ```bash
 # Listar imágenes de login-ejemplo
 docker images | grep login-ejemplo
@@ -84,6 +95,7 @@ docker images | grep login-ejemplo | awk '{print $3}' | xargs docker rmi -f
 ### 5. **Configuración de Docker Compose Mejorada**
 
 #### ✅ **Buenas Prácticas Implementadas**:
+
 - `--force-recreate`: Siempre recrea contenedores
 - `--remove-orphans`: Elimina contenedores huérfanos
 - `--no-parallel`: Evita conflictos en el pull
@@ -92,6 +104,7 @@ docker images | grep login-ejemplo | awk '{print $3}' | xargs docker rmi -f
 ### 6. **Monitoreo y Verificación**
 
 #### 🔍 **Verificar que se está usando la imagen correcta**:
+
 ```bash
 # Ver qué imagen está usando el contenedor
 docker inspect [CONTAINER_ID] | grep Image
@@ -101,6 +114,7 @@ docker compose ps
 ```
 
 #### 📊 **Verificar espacio en disco**:
+
 ```bash
 # Ver uso de espacio de Docker
 docker system df
@@ -112,6 +126,7 @@ docker images --format "table {{.Repository}}:{{.Tag}}\t{{.Size}}\t{{.CreatedAt}
 ## 🚀 **Flujo Recomendado para Deployments**
 
 ### Automático (GitHub Actions):
+
 1. ✅ Commit/Push a `develop` o `testing`
 2. ✅ GitHub Actions construye imagen con tag único
 3. ✅ Sube imagen a ECR
@@ -122,6 +137,7 @@ docker images --format "table {{.Repository}}:{{.Tag}}\t{{.Size}}\t{{.CreatedAt}
 8. ✅ Inicia contenedores con `--force-recreate`
 
 ### Manual (emergencias):
+
 ```bash
 # En tu servidor EC2
 ssh -i "loginCreds.pem" ubuntu@18.191.74.193
@@ -138,6 +154,7 @@ sudo docker compose up -d --force-recreate
 ```
 
 ## 📋 **Checklist Post-Deploy**
+
 - [ ] Verificar que el contenedor esté corriendo: `docker ps`
 - [ ] Verificar logs: `docker compose logs --tail=50`
 - [ ] Probar conectividad: `curl http://localhost:8080`
@@ -145,6 +162,7 @@ sudo docker compose up -d --force-recreate
 - [ ] Verificar que dice "node app.js" en los logs
 
 ## 🆘 **Solución Rápida si Vuelve a Pasar**
+
 ```bash
 # En el servidor EC2:
 sudo docker compose down --remove-orphans

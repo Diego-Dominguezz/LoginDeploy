@@ -56,18 +56,18 @@ jobs:
           IMAGE_TAG: testing-${{ github.sha }}-${{ github.run_number }}
         run: |
           echo "Building image with tag: $IMAGE_TAG"
-          
+
           # Build con múltiples tags para forzar actualización
           docker build -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:$IMAGE_TAG \
                        -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-latest \
                        -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing \
                        --build-arg NODE_ENV=testing .
-          
+
           # Push todas las versiones
           docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:$IMAGE_TAG
           docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-latest  
           docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing
-          
+
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       # Despliegue remoto en EC2 Testing vía SSH (solo pull y up, sin git pull)
