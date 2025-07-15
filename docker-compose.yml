@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   login-app:
     image: ${ECR_REGISTRY}/login-ejemplo:latest
@@ -12,12 +10,13 @@ services:
     environment:
       - NODE_ENV=production
     restart: unless-stopped
+    init: true # Helps with process management inside container
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      interval: 60s # Increased interval to reduce load
+      timeout: 15s # Increased timeout
+      retries: 5 # More retries
+      start_period: 90s # More time for startup
 
 volumes:
   mongodb_data:

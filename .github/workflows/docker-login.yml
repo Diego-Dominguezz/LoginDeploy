@@ -150,12 +150,12 @@ jobs:
             # Login a ECR y deploy con sudo
             echo "🔐 Logging in to ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
-            
+
             echo "📥 Pulling latest image..."
             sudo docker compose pull
-            
+
             echo "🚀 Starting deployment..."
             sudo docker compose up -d --remove-orphans
-            
+
             echo "✅ Deployment completed!"
             sudo docker compose ps

@@ -136,12 +136,12 @@ jobs:
             # Login a ECR y deploy con sudo
             echo "🔐 Logging in to ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
-            
+
             echo "📥 Pulling latest testing image..."
             sudo docker compose -f docker-compose.testing.yml pull
-            
+
             echo "🚀 Starting testing deployment..."
             sudo docker compose -f docker-compose.testing.yml up -d --remove-orphans
-            
+
             echo "✅ Testing deployment completed!"
             sudo docker compose -f docker-compose.testing.yml ps
