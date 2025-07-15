@@ -49,17 +49,26 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Build and push imagen testing con Docker Bake
-      - name: Build and push Testing image with Docker Bake
+      # Build and push imagen testing con tags únicos
+      - name: Build and push Testing image with unique tags
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: testing-${{ github.sha }}-${{ github.run_number }}
         run: |
-          if [ -f docker-bake.hcl ]; then
-            ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }} docker buildx bake --push testing-deploy
-          else
-            docker build -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing --build-arg NODE_ENV=testing .
-            docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing
-          fi
+          echo "Building image with tag: $IMAGE_TAG"
+          
+          # Build con múltiples tags para forzar actualización
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:$IMAGE_TAG \
+                       -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-latest \
+                       -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing \
+                       --build-arg NODE_ENV=testing .
+          
+          # Push todas las versiones
+          docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:$IMAGE_TAG
+          docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-latest  
+          docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing
+          
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       # Despliegue remoto en EC2 Testing vía SSH (solo pull y up, sin git pull)
       - name: Deploy on EC2 Testing via SSH
@@ -103,11 +112,11 @@ jobs:
               echo "Usuario agregado al grupo docker."
             fi
 
-            # Crear docker-compose.testing.yml para testing
-            cat > docker-compose.testing.yml << 'EOFCOMPOSE'
+            # Crear docker-compose.testing.yml para testing con tag específico
+            cat > docker-compose.testing.yml << EOFCOMPOSE
             services:
               login-app-testing:
-                image: ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing
+                image: ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-${{ github.sha }}-${{ github.run_number }}
                 ports:
                   - "8080:3000"
                 volumes:
@@ -137,11 +146,20 @@ jobs:
             echo "🔐 Logging in to ECR..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
 
-            echo "📥 Pulling latest testing image..."
-            sudo docker compose -f docker-compose.testing.yml pull
+            # Detener contenedores existentes
+            echo "� Stopping existing containers..."
+            sudo docker compose -f docker-compose.testing.yml down --remove-orphans || true
 
-            echo "🚀 Starting testing deployment..."
-            sudo docker compose -f docker-compose.testing.yml up -d --remove-orphans
+            # Limpiar imágenes viejas para forzar actualización
+            echo "🧹 Cleaning old images..."
+            sudo docker image prune -f
+            sudo docker images | grep login-ejemplo | grep -v testing-${{ github.sha }}-${{ github.run_number }} | awk '{print $3}' | xargs -r sudo docker rmi -f || true
+
+            echo "�📥 Pulling latest testing image with specific tag..."
+            sudo docker compose -f docker-compose.testing.yml pull --no-parallel
+
+            echo "🚀 Starting testing deployment with new image..."
+            sudo docker compose -f docker-compose.testing.yml up -d --remove-orphans --force-recreate
 
             # Set up auto-start service (only needs to be done once, but safe to run multiple times)
             echo "🔧 Setting up auto-start service..."
