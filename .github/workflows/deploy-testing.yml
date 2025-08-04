@@ -115,15 +115,39 @@ jobs:
             # Crear docker-compose.testing.yml para testing con tag específico
             cat > docker-compose.testing.yml << EOFCOMPOSE
             services:
-              login-app-testing:
-                image: ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-${{ github.sha }}-${{ github.run_number }}
+              mongodb-testing:
+                image: mongo:7.0
+                container_name: mongodb-testing
+                restart: unless-stopped
                 ports:
-                  - "8080:3000"
+                  - "27017:27017"
+                environment:
+                  MONGO_INITDB_ROOT_USERNAME: admin
+                  MONGO_INITDB_ROOT_PASSWORD: testing123
+                  MONGO_INITDB_DATABASE: loginapp
                 volumes:
                   - mongodb_data_testing:/data/db
                   - ./logs:/var/log/mongodb
+                healthcheck:
+                  test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 5
+                  start_period: 30s
+
+              login-app-testing:
+                image: ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-${{ github.sha }}-${{ github.run_number }}
+                container_name: login-app-testing
+                depends_on:
+                  mongodb-testing:
+                    condition: service_healthy
+                ports:
+                  - "80:3000"
+                  - "8080:3000"
                 environment:
                   - NODE_ENV=testing
+                  - MONGODB_URI=mongodb://admin:testing123@mongodb-testing:27017/loginapp?authSource=admin
+                  - PORT=3000
                 restart: unless-stopped
                 init: true
                 healthcheck:
@@ -132,6 +156,7 @@ jobs:
                   timeout: 15s
                   retries: 5
                   start_period: 90s
+
             volumes:
               mongodb_data_testing:
                 driver: local
