@@ -3,20 +3,33 @@ services:
     image: ${ECR_REGISTRY}/login-ejemplo:latest
     ports:
       - "80:3000" # Map app port 3000 in the container to port 80 on the host
-      # - "27017:27017" # Uncomment only if you need to access MongoDB from your host (not needed for normal app use)
     volumes:
-      - mongodb_data:/data/db
-      - ./logs:/var/log/mongodb
+      - ./logs:/var/log/app
     environment:
       - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb:27017/login-database
+      - MONGODB_URI=mongodb://mongodb:27017/login-database
     restart: unless-stopped
     init: true # Helps with process management inside container
+    depends_on:
+      - mongodb
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 60s # Increased interval to reduce load
       timeout: 15s # Increased timeout
       retries: 5 # More retries
       start_period: 90s # More time for startup
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./logs:/var/log/mongodb
+    environment:
+      - MONGO_INITDB_DATABASE=login-database
+    restart: unless-stopped
 
 volumes:
   mongodb_data:
