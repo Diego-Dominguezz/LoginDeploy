@@ -8,7 +8,9 @@ const bcrypt = require('bcrypt');
 require('dotenv').config();
 const mongoose = require('mongoose');
 
-const mongoUri = process.env.MONGODB_URI;
+// Configuración de MongoDB URI con fallback para contenedor local
+const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/logindb';
+console.log('MongoDB URI configurado:', mongoUri);
 // Conexión de MongoDB Atlas
 // const mongo_uri = 'mongodb+srv://alex:1234@deswebpro.5s0hk.mongodb.net/?retryWrites=true&w=majority&appName=DesWebPro';
 

@@ -115,5 +115,18 @@ echo "Directorio actual: $(pwd)"
 echo "Archivos disponibles:"
 ls -la
 
+# Exportar variables de entorno para asegurar que están disponibles
+export MONGODB_URI="mongodb://localhost:27017/logindb"
+export MONGO_URI="mongodb://localhost:27017/logindb"
+export NODE_ENV="production"
+export PORT="3000"
+export JWT_SECRET="your-jwt-secret-key-here"
+export DB_NAME="logindb"
+
+echo "Variables de entorno configuradas:"
+echo "MONGODB_URI: $MONGODB_URI"
+echo "NODE_ENV: $NODE_ENV"
+echo "PORT: $PORT"
+
 # Ejecutar Node.js en primer plano para evitar procesos duplicados
 exec node app.js
