@@ -35,6 +35,14 @@ RUN mkdir -p /data/db /var/log/mongodb \
 # Permitir build args para entorno
 ARG NODE_ENV=production
 
+# Establecer variables de entorno por defecto
+ENV MONGODB_URI=mongodb://localhost:27017/logindb
+ENV MONGO_URI=mongodb://localhost:27017/logindb
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV JWT_SECRET=your-jwt-secret-key-here
+ENV DB_NAME=logindb
+
 # Directorio de trabajo para la aplicación
 WORKDIR /usr/src/app
 
