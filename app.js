@@ -7,10 +7,25 @@ const bcrypt = require('bcrypt');
 
 require('dotenv').config();
 const mongoose = require('mongoose');
+const packageJson = require('./package.json');
+
+// App version for logging and monitoring (from package.json)
+const APP_VERSION = packageJson.version;
+
+// Enhanced logging function
+const log = (message, level = 'INFO') => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [${level}] [v${APP_VERSION}] ${message}`);
+};
 
 // Configuración de MongoDB URI con fallback para contenedor local
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/logindb';
-console.log('MongoDB URI configurado:', mongoUri);
+log(`Application starting - Version: ${APP_VERSION}`);
+log(`MongoDB URI configurado: ${mongoUri}`);
+log(`Environment variables - NODE_ENV: ${process.env.NODE_ENV}, PORT: ${process.env.PORT}`);
+
+// Enable mongoose debugging for better MongoDB logs
+mongoose.set('debug', true);
 // Conexión de MongoDB Atlas
 // const mongo_uri = 'mongodb+srv://alex:1234@deswebpro.5s0hk.mongodb.net/?retryWrites=true&w=majority&appName=DesWebPro';
 
@@ -21,12 +36,45 @@ console.log('MongoDB URI configurado:', mongoUri);
 // Conexión a MongoDB
 async function connectDB() {
     try {
-        await mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true });
-        console.log(`Successfully connected to ${mongoUri}`);
+        log('Attempting to connect to MongoDB...', 'INFO');
+        log(`Connection string: ${mongoUri}`, 'DEBUG');
+
+        await mongoose.connect(mongoUri, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+            socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+        });
+
+        log(`Successfully connected to MongoDB at ${mongoUri}`, 'SUCCESS');
+
+        // Test the connection
+        const admin = mongoose.connection.db.admin();
+        const result = await admin.ping();
+        log(`MongoDB ping result: ${JSON.stringify(result)}`, 'DEBUG');
+
     } catch (err) {
-        console.error('Error connecting to MongoDB:', err.message);
+        log(`Error connecting to MongoDB: ${err.message}`, 'ERROR');
+        log(`Full error: ${JSON.stringify(err, null, 2)}`, 'ERROR');
+
+        // Log connection state
+        log(`Mongoose connection state: ${mongoose.connection.readyState}`, 'DEBUG');
+        // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
     }
 }
+
+// Add connection event listeners for better monitoring
+mongoose.connection.on('connected', () => {
+    log('Mongoose connected to MongoDB', 'SUCCESS');
+});
+
+mongoose.connection.on('error', (err) => {
+    log(`Mongoose connection error: ${err}`, 'ERROR');
+});
+
+mongoose.connection.on('disconnected', () => {
+    log('Mongoose disconnected from MongoDB', 'WARNING');
+});
 
 // Define el esquema y modelo de usuario
 const userSchema = new mongoose.Schema({
@@ -108,8 +156,34 @@ app.get('/logout', (req, res) => {
 });
 
 // Solo iniciar el servidor si no estamos en modo test
-app.listen(3000, () => {
-    console.log('Server started on port 3000');
+const server = app.listen(3000, () => {
+    log(`Server started on port 3000 - Version: ${APP_VERSION}`, 'SUCCESS');
+    log(`Process ID: ${process.pid}`, 'INFO');
+    log(`Node.js version: ${process.version}`, 'INFO');
+    log(`MongoDB connection state: ${mongoose.connection.readyState}`, 'INFO');
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+    log('Received SIGINT, shutting down gracefully...', 'INFO');
+    server.close(() => {
+        log('HTTP server closed', 'INFO');
+        mongoose.connection.close(false, () => {
+            log('MongoDB connection closed', 'INFO');
+            process.exit(0);
+        });
+    });
+});
+
+process.on('SIGTERM', () => {
+    log('Received SIGTERM, shutting down gracefully...', 'INFO');
+    server.close(() => {
+        log('HTTP server closed', 'INFO');
+        mongoose.connection.close(false, () => {
+            log('MongoDB connection closed', 'INFO');
+            process.exit(0);
+        });
+    });
 });
 
 module.exports = app;

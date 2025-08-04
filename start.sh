@@ -49,9 +49,21 @@ done
 # Crear directorio de logs si no existe
 mkdir -p /var/log
 
-# Iniciar MongoDB en segundo plano
+# Iniciar MongoDB en segundo plano con más logging
 echo "Iniciando MongoDB..."
-mongod --dbpath /data/db --logpath /var/log/mongodb.log --fork --bind_ip_all
+echo "MongoDB configuration:"
+echo "  - Data path: /data/db"
+echo "  - Log path: /var/log/mongodb.log"
+echo "  - Bind IP: all interfaces"
+
+# Start MongoDB with more verbose logging
+mongod --dbpath /data/db \
+       --logpath /var/log/mongodb.log \
+       --logappend \
+       --fork \
+       --bind_ip_all \
+       --verbose \
+       --auth
 
 # Esperar a que MongoDB esté listo
 echo "Esperando a que MongoDB esté listo..."
@@ -60,13 +72,22 @@ counter=0
 until mongosh --eval "print('MongoDB is ready')" > /dev/null 2>&1; do
     if [ $counter -eq $timeout ]; then
         echo "Error: MongoDB no pudo iniciarse en $timeout segundos"
+        echo "MongoDB log contents:"
+        cat /var/log/mongodb.log
+        echo "MongoDB process status:"
+        ps aux | grep mongod
+        echo "Port 27017 status:"
+        netstat -tlnp | grep 27017
         exit 1
     fi
     sleep 2
     counter=$((counter + 2))
+    echo "Waiting for MongoDB... ($counter/$timeout seconds)"
 done
 
 echo "MongoDB está listo y funcionando"
+echo "MongoDB log (last 10 lines):"
+tail -10 /var/log/mongodb.log
 
 # Inicializar la base de datos si es necesario
 echo "Configurando base de datos..."
