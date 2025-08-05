@@ -1,21 +1,40 @@
+version: "3.8"
+
 services:
   login-app:
-    image: login-ejemplo-test:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV:-development}
+    image: login-ejemplo:local
     ports:
-      - "8081:3000" # Map app port 3000 in the container to port 8081 on the host
+      - "${HOST_PORT:-3000}:3000"
     volumes:
+      - ./logs:/var/log/app
       - mongodb_data:/data/db
-      - ./logs:/var/log/mongodb
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-development}
+      - MONGO_URI=mongodb://localhost:27017/login-database
+      - MONGODB_URI=mongodb://localhost:27017/login-database
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-key-here}
+      - DB_NAME=login-database
     restart: unless-stopped
-    init: true # Helps with process management inside container
+    init: true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 60s # Increased interval to reduce load
-      timeout: 15s # Increased timeout
-      retries: 5 # More retries
-      start_period: 90s # More time for startup
+      interval: 60s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
+    networks:
+      - login-network
 
 volumes:
   mongodb_data:
+    driver: local
+
+networks:
+  login-network:
+    driver: bridge

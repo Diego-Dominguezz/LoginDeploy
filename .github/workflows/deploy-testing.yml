@@ -44,29 +44,31 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Login a AWS ECR usando aws-actions/amazon-ecr-login
-      - name: Login to Amazon ECR
+      # Login to Public ECR for testing
+      - name: Login to Public ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        run: |
+          aws ecr-public get-login-password --region us-east-2 | docker login --username AWS --password-stdin public.ecr.aws
+          echo "registry=public.ecr.aws/diego-public" >> $GITHUB_OUTPUT
 
       # Build and push imagen testing con tags únicos
       - name: Build and push Testing image with unique tags
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REGISTRY: public.ecr.aws/diego-public
           IMAGE_TAG: testing-${{ github.sha }}-${{ github.run_number }}
         run: |
           echo "Building image with tag: $IMAGE_TAG"
 
           # Build con múltiples tags para forzar actualización
-          docker build -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:$IMAGE_TAG \
-                       -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-latest \
-                       -t ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing \
+          docker build -t public.ecr.aws/diego-public/login-ejemplo:$IMAGE_TAG \
+                       -t public.ecr.aws/diego-public/login-ejemplo:testing-latest \
+                       -t public.ecr.aws/diego-public/login-ejemplo:testing \
                        --build-arg NODE_ENV=testing .
 
           # Push todas las versiones
-          docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:$IMAGE_TAG
-          docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-latest  
-          docker push ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing
+          docker push public.ecr.aws/diego-public/login-ejemplo:$IMAGE_TAG
+          docker push public.ecr.aws/diego-public/login-ejemplo:testing-latest  
+          docker push public.ecr.aws/diego-public/login-ejemplo:testing
 
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
@@ -136,7 +138,7 @@ jobs:
                   start_period: 30s
 
               login-app-testing:
-                image: ${{ steps.login-ecr.outputs.registry }}/login-ejemplo:testing-${{ github.sha }}-${{ github.run_number }}
+                image: public.ecr.aws/diego-public/login-ejemplo:testing-${{ github.sha }}-${{ github.run_number }}
                 container_name: login-app-testing
                 depends_on:
                   mongodb-testing:
@@ -167,9 +169,9 @@ jobs:
             export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
             export AWS_DEFAULT_REGION="${{ secrets.AWS_REGION }}"
 
-            # Login a ECR y deploy con sudo
-            echo "🔐 Logging in to ECR..."
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+            # Login a Public ECR y deploy con sudo
+            echo "🔐 Logging in to Public ECR..."
+            aws ecr-public get-login-password --region us-east-2 | sudo docker login --username AWS --password-stdin public.ecr.aws
 
             # Detener contenedores existentes
             echo "� Stopping existing containers..."
