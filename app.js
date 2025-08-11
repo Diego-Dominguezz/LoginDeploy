@@ -40,8 +40,6 @@ async function connectDB() {
         log(`Connection string: ${mongoUri}`, 'DEBUG');
 
         await mongoose.connect(mongoUri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
             socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
         });
@@ -156,34 +154,51 @@ app.get('/logout', (req, res) => {
 });
 
 // Solo iniciar el servidor si no estamos en modo test
-const server = app.listen(3000, () => {
-    log(`Server started on port 3000 - Version: ${APP_VERSION}`, 'SUCCESS');
-    log(`Process ID: ${process.pid}`, 'INFO');
-    log(`Node.js version: ${process.version}`, 'INFO');
-    log(`MongoDB connection state: ${mongoose.connection.readyState}`, 'INFO');
-});
+let server;
+if (process.env.NODE_ENV !== 'test') {
+    server = app.listen(3000, () => {
+        log(`Server started on port 3000 - Version: ${APP_VERSION}`, 'SUCCESS');
+        log(`Process ID: ${process.pid}`, 'INFO');
+        log(`Node.js version: ${process.version}`, 'INFO');
+        log(`MongoDB connection state: ${mongoose.connection.readyState}`, 'INFO');
+    });
+}
 
 // Graceful shutdown
 process.on('SIGINT', () => {
     log('Received SIGINT, shutting down gracefully...', 'INFO');
-    server.close(() => {
-        log('HTTP server closed', 'INFO');
-        mongoose.connection.close(false, () => {
+    if (server) {
+        server.close(() => {
+            log('HTTP server closed', 'INFO');
+            mongoose.connection.close().then(() => {
+                log('MongoDB connection closed', 'INFO');
+                process.exit(0);
+            });
+        });
+    } else {
+        mongoose.connection.close().then(() => {
             log('MongoDB connection closed', 'INFO');
             process.exit(0);
         });
-    });
+    }
 });
 
 process.on('SIGTERM', () => {
     log('Received SIGTERM, shutting down gracefully...', 'INFO');
-    server.close(() => {
-        log('HTTP server closed', 'INFO');
-        mongoose.connection.close(false, () => {
+    if (server) {
+        server.close(() => {
+            log('HTTP server closed', 'INFO');
+            mongoose.connection.close().then(() => {
+                log('MongoDB connection closed', 'INFO');
+                process.exit(0);
+            });
+        });
+    } else {
+        mongoose.connection.close().then(() => {
             log('MongoDB connection closed', 'INFO');
             process.exit(0);
         });
-    });
+    }
 });
 
 module.exports = app;
